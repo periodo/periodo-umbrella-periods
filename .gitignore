@@ -75,6 +75,9 @@ target/
 # pyenv
 .python-version
 
+# Python Virtual Env
+.virtualenv/
+
 # celery beat schedule file
 celerybeat-schedule
 
@@ -105,3 +108,6 @@ venv.bak/
 
 # PyCharm
 .idea/
+
+# Docker Stuff
+data/
