@@ -1,0 +1,3 @@
+include README.rst
+include LICENSE
+include periodo_umbrella_periods_cli/data/*.json*

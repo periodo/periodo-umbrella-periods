@@ -1,0 +1,7 @@
+__title__ = 'periodo_umbrella_periods_cli'
+__description__ = 'A CLI for generating "umbrella" definitions for PeriodO period concepts.'
+__url__ = 'https://github.com/periodo/periodo-umbrella-periods'
+__version__ = '0.0.1'
+__author__ = 'Maxwell Lincoln'
+__author_email__ = 'me@maxwelllincoln.com'
+__license__ = 'CC0 1.0 Universal'
