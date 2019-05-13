@@ -1,20 +1,15 @@
 from unittest import TestCase
-from periodo_umbrella_periods_cli.graph import UmbrellaAuthority
-from periodo_umbrella_periods_cli.graph.terms import CONTEXT_LD
+from periodo_umbrella_periods_cli.graph.umbrella import UmbrellaPeriods
 
 
-class TestUmbrellaAuthority(TestCase):
+class TestUmbrella(TestCase):
 
     def test_skolem_identifier_generation(self):
 
-        graph = UmbrellaAuthority()
+        graph = UmbrellaPeriods()
 
-        self.assertIsNotNone(graph)
+        query = graph.prepare_query(["https://example.com", "https://example.com"])
 
-    def test_serialize(self):
+        result = graph.query(query)
 
-        graph = UmbrellaAuthority()
-
-        output = str(graph.serialize(format="json-ld", context=CONTEXT_LD, indent=4))
-
-        self.assertEqual(output, "")
+        self.assertIsNotNone(result)

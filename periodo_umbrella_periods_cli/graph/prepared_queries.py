@@ -97,29 +97,26 @@ def get_create_new_period_collection_query(skolem, iris):
     Returns a prepared SPARQL CONSTRUCT statement that returns a graph containing new Period Collection.
     :returns: rdflib.plugins.sparql.preparedQuery object
     """
-    return prepareQuery(
 
-        """
-        CONSTRUCT {
+    query = """CONSTRUCT {{
             <{iri}> a skos:Concept ;
-            periodo:spatialCoverageDescription ?spatialDescription ;
-            derivedFrom ?cList ;
+            periodo:derivedFrom ?scList ;
             time:intervalStartedBy [ 
                 time:hasDateTimeDescription [ 
-                    time:year ?startYear 
+                    time:year ?minYear 
                 ] 
             ] ;
             time:intervalFinishedBy [
                 time:hasDateTimeDescription [
-                    time:year ?endYear
+                    time:year ?maxYear
                 ] 
             ] .
                 
-        } 
-        WHERE {
-            {
-                SELECT DISTINCT (MIN(?startYear) AS ?minYear) (MAX(?endYear) AS ?maxYear)
-                WHERE {
+        }} 
+        WHERE {{
+            {{
+                SELECT (MIN(?startYear) AS ?minYear) (MAX(?endYear) AS ?maxYear)
+                WHERE {{
                     ?subject a skos:Concept ;
                     time:intervalStartedBy [ 
                         time:hasDateTimeDescription [ 
@@ -131,22 +128,27 @@ def get_create_new_period_collection_query(skolem, iris):
                             time:year ?endYear
                         ] 
                     ] .
-                }
-                FILTER( ?subject IN( <{filters}> ) )
-            }
+                    FILTER( ?subject IN( <{filters}> ) )
+                }}
+                
+            }}
             ?subject dcterms:spatial ?scList .
             FILTER( ?subject IN( <{filters}> ) )
-        
-        }
+        }}
         """.format(
 
             iri=skolem,
             filters=">, <".join(iris)
 
-        ),
+        )
+
+    return prepareQuery(
+
+        query,
         initNs={
 
             'dcterms': URIRef('http://purl.org/dc/terms/'),
+            'periodo': URIRef('http://n2t.net/ark:/99152/p0v#'),
             'skos': URIRef('http://www.w3.org/2004/02/skos/core#'),
             'time': URIRef('http://www.w3.org/2006/time#')
         }

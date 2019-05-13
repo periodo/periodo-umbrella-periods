@@ -1,8 +1,7 @@
 import click
 
-from ..graph.prepared_queries import get_create_new_period_collection_query
-from ..graph.umbrella import UmbrellaPeriods
-from .types import IRIParamType
+from periodo_umbrella_periods_cli.graph import UmbrellaPeriods
+from periodo_umbrella_periods_cli.cli.types import IRIParamType
 
 
 @click.command()
@@ -12,9 +11,9 @@ from .types import IRIParamType
 def create(context, iris, src="default"):
     """Creates a new 'umbrella' PeriodO Authority from the given PeriodO Period URIs."""
 
-    umbrella = UmbrellaPeriods(store=src)
+    umbrella = UmbrellaPeriods()
 
-    query = get_create_new_period_collection_query(umbrella.get_identifier(), iris)
+    query = umbrella.prepare_query(iris)
 
     result = umbrella.query(query)
 
