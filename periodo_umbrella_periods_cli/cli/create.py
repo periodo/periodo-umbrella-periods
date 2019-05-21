@@ -11,10 +11,10 @@ from periodo_umbrella_periods_cli.cli.types import IRIParamType
 def create(context, iris, src="default"):
     """Creates a new 'umbrella' PeriodO Authority from the given PeriodO Period URIs."""
 
-    umbrella = UmbrellaPeriods()
+    umbrella = UmbrellaPeriods(iris)
 
-    query = umbrella.prepare_query(iris)
+    umbrella.create_umbrella()
 
-    result = umbrella.query(query)
+    result = umbrella.describe_skolem()
 
-    click.echo(result.serialize(format='n3'))
+    click.echo(result.serialize(encoding='utf-8', format='json-ld'))

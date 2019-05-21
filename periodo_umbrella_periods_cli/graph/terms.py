@@ -1,19 +1,7 @@
-from rdflib import Namespace, URIRef
-from rdflib.namespace import SKOS
+from rdflib import Namespace, Graph
+from rdflib.namespace import NamespaceManager
 
-AS = Namespace('https://www.w3.org/ns/activitystreams#')
-BASE = Namespace('http://n2t.net/ark:/99152/')
-BIBO = Namespace('http://purl.org/ontology/bibo/')
-LEXVO = Namespace('http://lexvo.org/ontology#')
-PERIODO = Namespace('http://n2t.net/ark:/99152/p0v#')
-PROV = Namespace('http://www.w3.org/ns/prov#')
-TIME = Namespace('http://www.w3.org/2006/time#')
-
-AUTHORITY = URIRef(SKOS['ConceptScheme'])
-COMMENT = URIRef(AS['Note'])
-PERIOD = URIRef(SKOS['Concept'])
-
-CONTEXT_LD = {
+CONTEXT = {
     "@base": "http://n2t.net/ark:/99152/",
     "Authority": "skos:ConceptScheme",
     "Comment": "as:Note",
@@ -232,3 +220,52 @@ CONTEXT_LD = {
     }
 }
 
+
+def create_bindings_dict():
+
+    bindings = {}
+
+    for k, v in CONTEXT.items():
+
+        if isinstance(v, dict):
+
+            if "@id" in v:
+
+                bindings[k] = Namespace(v['@id'])
+
+            else:
+
+                bindings[k] = Namespace(v['@reverse'])
+
+        else:
+
+            bindings[k] = Namespace(v)
+
+    return bindings
+
+
+class PeriodONamespaceManager(NamespaceManager):
+
+    def __init__(self):
+
+        super(PeriodONamespaceManager, self).__init__(Graph())
+
+        self._bind_namespaces()
+
+    def _bind_namespaces(self):
+
+        for k, v in CONTEXT.items():
+
+            if isinstance(v, dict):
+
+                if "@id" in v:
+
+                    self.bind(k, Namespace(v['@id']), override=True, replace=True)
+
+                else:
+
+                    self.bind(k, Namespace(v['@reverse']), override=True, replace=True)
+
+            else:
+
+                self.bind(k, Namespace(v), override=True, replace=True)

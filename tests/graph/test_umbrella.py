@@ -8,8 +8,23 @@ class TestUmbrella(TestCase):
 
         graph = UmbrellaPeriods()
 
-        query = graph.prepare_query(["https://example.com", "https://example.com"])
+        graph2 = UmbrellaPeriods()
 
-        result = graph.query(query)
+        self.assertNotEqual(graph.get_skolem(), graph2.get_skolem())
 
-        self.assertIsNotNone(result)
+    def test_create_umbrella(self):
+
+        graph = UmbrellaPeriods(
+
+            derived_from=[
+
+                "http://n2t.net/ark:/99152/p03wskdvwkb",
+                "http://n2t.net/ark:/99152/p03wskdbh6h"
+
+            ]
+
+        )
+
+        graph.create_umbrella()
+
+        self.assertTrue(True)

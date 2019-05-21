@@ -1,155 +1,89 @@
-from rdflib import URIRef
-from rdflib.namespace import SKOS
-from rdflib.plugins.sparql import prepareQuery
-from .sparql import *
-
-
-def get_check_for_iri_query(iri):
+def describe_skolem(skolem):
     """
-    Returns a prepared SPARQL ASK statement that checks whether the given IRI is of rdf:type skos:Concept
-    :returns: rdflib.plugins.sparql.preparedQuery object
+    https://github.com/RDFLib/rdflib/issues/813
+    :param skolem:
+    :return:
     """
+    return """
+    CONSTRUCT {{ 
+        ?s ?p ?o 
+    }}
+    WHERE {{ 
+        ?s ?p ?o 
+        FILTER (?s = <{s}>)
+    }}
+    """.format(s=skolem)
 
-    return prepareQuery(
 
-        "ASK {{ {0} a skos:Concept .}}".format(URIRef(iri).n3()),
-        initNs={'skos': SKOS}
+def insert_spatial_descriptions(skolem, derived_from):
+
+    return """
+    INSERT {{
+        <{skolem}> dcterms:spatial ?where
+    }}
+    WHERE {{
+        ?subject dcterms:spatial ?where
+        FILTER( ?subject IN( <{filters}> ) )
+    }}
+    """.format(
+        skolem=skolem,
+        filters=">, <".join(derived_from)
     )
 
 
-def get_concept_iris_query():
-    """
-    Returns a prepared SPARQL SELECT statement that returns subjects IRIs that are of rdf:type skos:Concept.
-    :returns: rdflib.plugins.sparql.preparedQuery object
-    """
+def insert_derived_from(skolem, derived_from):
 
-    return prepareQuery(
-
-        "SELECT ?uri WHERE {{ {0} }}".format(
-            "?uri a skos:Concept"
-        ),
-        initNs={'skos': SKOS}
-
+    return """
+    INSERT DATA {{
+        <{skolem}> periodo:derivedFrom <{filters}>
+    }}
+    """.format(
+        skolem=skolem,
+        filters=">, <".join(derived_from)
     )
 
 
-def get_iris_of_type_dc_spatial():
+def insert_time_interval_bounds(skolem, derived_from):
     """
-    Returns a prepared SPARQL SELECT statement that returns the subjects IRIs that are of rdf:type dc:spatial.
-    :returns: rdflib.plugins.sparql.preparedQuery object
-
-    TODO: WIP - Check this query structure against the Periodo dataset to make sure everything is in the right place.
-    """
-
-    return prepareQuery(
-
-        "SELECT ?uri WHERE {{ {0} }}".format(
-            "?uri a dcterms:spatial"
-        ),
-        initNs={'skos': SKOS}
-
-    )
-
-
-def get_maximum_finishing_interval_query(filters=""):
-    """
-    Returns a prepared SPARQL SELECT statement that returns the maximum value from the set of all object literals
-    with a predicate of time:intervalFinishedBy.
+    Returns a prepared SPARQL INSERT statement that attaches maximum and minimum for a given PeriodCollection.
+    :skolem:
+    ::
     :returns: rdflib.plugins.sparql.preparedQuery object
     """
 
-    return prepareQuery(
-
-        "SELECT {m} WHERE {{ {w} {f} }}".format(
-
-            m=max_sparql('year'),
-            w='?x time:intervalFinishedBy [ time:hasDateTimeDescription [ time:year ?year ] ] .',
-            f=filters
-
-        ),
-        initNs={'time': URIRef('http://www.w3.org/2006/time#')}
-
-    )
-
-
-def get_minimum_starting_interval_query(filters=""):
-    """
-    Returns a prepared SPARQL SELECT statement that returns the minimum value from the set of all object literals
-    with a predicate of time:intervalStartedBy.
-    :returns: rdflib.plugins.sparql.preparedQuery object
-    """
-
-    return prepareQuery(
-
-        "SELECT {m} WHERE {{ {w} {f} }}".format(
-
-            m=min_sparql('year'),
-            w='?x time:intervalStartedBy [ time:hasDateTimeDescription [ time:year ?year ] ] .',
-            f=filters
-
-        ),
-        initNs={'time': URIRef('http://www.w3.org/2006/time#')}
-    )
-
-
-def get_create_new_period_collection_query(skolem, iris):
-    """
-    Returns a prepared SPARQL CONSTRUCT statement that returns a graph containing new Period Collection.
-    :returns: rdflib.plugins.sparql.preparedQuery object
-    """
-
-    query = """CONSTRUCT {{
-            <{iri}> a skos:Concept ;
-            periodo:derivedFrom ?scList ;
-            time:intervalStartedBy [ 
-                time:hasDateTimeDescription [ 
-                    time:year ?minYear 
-                ] 
-            ] ;
-            time:intervalFinishedBy [
-                time:hasDateTimeDescription [
-                    time:year ?maxYear
-                ] 
-            ] .
-                
-        }} 
+    return """
+    INSERT {{
+        <{skolem}> time:intervalStartedBy [
+            time:hasDateTimeDescription [
+                time:year ?minYear
+            ]
+        ] .
+        <{skolem}> time:intervalFinishedBy [
+            time:hasDateTimeDescription [
+                time:year ?maxYear
+            ]
+        ] .
+    }}
+    WHERE {{
+        SELECT (MIN(?startYear) AS ?minYear) (MAX(?endYear) AS ?maxYear)
         WHERE {{
-            {{
-                SELECT (MIN(?startYear) AS ?minYear) (MAX(?endYear) AS ?maxYear)
-                WHERE {{
-                    ?subject a skos:Concept ;
-                    time:intervalStartedBy [ 
-                        time:hasDateTimeDescription [ 
-                            time:year ?startYear 
-                        ] 
-                    ] ;
-                    time:intervalFinishedBy [
-                        time:hasDateTimeDescription [
-                            time:year ?endYear
-                        ] 
-                    ] .
-                    FILTER( ?subject IN( <{filters}> ) )
-                }}
-                
-            }}
-            ?subject dcterms:spatial ?scList .
+            ?subject a skos:Concept ;
+                time:intervalStartBy [
+                    time:hasDateTimeDescription [
+                        time:year ?startYear
+                    ] 
+                ];
+                time:intervalFinishedBy [
+                    time:hasDateTimeDescription [
+                       time:year ?maxYear
+                    ]
+                ] .
             FILTER( ?subject IN( <{filters}> ) )
         }}
-        """.format(
+    }}
+    """.format(
 
-            iri=skolem,
-            filters=">, <".join(iris)
+        filters=">, <".join(derived_from),
+        skolem=skolem
 
-        )
-
-    return prepareQuery(
-
-        query,
-        initNs={
-
-            'dcterms': URIRef('http://purl.org/dc/terms/'),
-            'periodo': URIRef('http://n2t.net/ark:/99152/p0v#'),
-            'skos': URIRef('http://www.w3.org/2004/02/skos/core#'),
-            'time': URIRef('http://www.w3.org/2006/time#')
-        }
     )
