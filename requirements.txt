@@ -27,4 +27,4 @@ SPARQLWrapper==1.8.2
 text-unidecode==1.2
 tqdm==4.23.4
 twine==1.11.0
-urllib3==1.23
+urllib3==1.26.5
